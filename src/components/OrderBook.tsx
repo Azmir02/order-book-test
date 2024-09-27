@@ -20,9 +20,9 @@ const OrderBookComponent: React.FC = () => {
     const grouped: Record<number, number> = {};
 
     levels.forEach(({ price, size }) => {
-      const roundedPrice = Math.floor(price / groupingSize) * groupingSize; // Round down to nearest grouping size
+      const roundedPrice = Math.floor(price / groupingSize) * groupingSize;
       if (size > 0) {
-        grouped[roundedPrice] = (grouped[roundedPrice] || 0) + size; // Combine sizes for the same price level
+        grouped[roundedPrice] = (grouped[roundedPrice] || 0) + size;
       }
     });
 
@@ -103,7 +103,6 @@ const OrderBookComponent: React.FC = () => {
       product_ids: [market],
     });
     if (feedActive) {
-      // Send unsubscribe message to the server
       const socket = new WebSocket("wss://www.cryptofacilities.com/ws/v1");
       socket.onopen = () => {
         socket.send(unsubscribeMessage);
