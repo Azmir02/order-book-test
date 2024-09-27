@@ -29,7 +29,7 @@ const OrderBookComponent: React.FC = () => {
     return Object.entries(grouped).map(([price, size]) => ({
       price: Number(price),
       size,
-      total: size, // Total can be updated based on your logic
+      total: size,
     }));
   };
 
