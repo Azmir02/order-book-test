@@ -1,4 +1,3 @@
-// src/types/OrderBookTypes.ts
 export interface OrderLevel {
   price: number;
   size: number;

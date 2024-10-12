@@ -12,12 +12,20 @@ const OrderBookComponent: React.FC = () => {
   const [grouping, setGrouping] = useState(0.5);
   const [feedActive, setFeedActive] = useState(true);
 
-  // Group orders based on selected grouping size
+  const sortFunction = (a: any[], b: any[]) => {
+    if (parseFloat(b[0]) == parseFloat(a[0])) {
+      return 0;
+    } else {
+      return parseFloat(b[0]) < parseFloat(a[0]) ? -1 : 1;
+    }
+  };
+
   const groupOrders = (
     levels: OrderLevel[],
     groupingSize: number
   ): OrderLevel[] => {
     const grouped: Record<number, number> = {};
+    let cumulativeTotal = 0;
 
     levels.forEach(({ price, size }) => {
       const roundedPrice = Math.floor(price / groupingSize) * groupingSize;
@@ -26,11 +34,20 @@ const OrderBookComponent: React.FC = () => {
       }
     });
 
-    return Object.entries(grouped).map(([price, size]) => ({
-      price: Number(price),
-      size,
-      total: size,
-    }));
+    const groupedData = Object.entries(grouped)
+      .sort((a: any[], b: any[]) => sortFunction(a, b))
+      .map(([price, size]) => {
+        cumulativeTotal += size;
+
+        return {
+          price: Number(price),
+          size,
+          total: cumulativeTotal,
+        };
+      });
+
+    console.log(groupedData);
+    return groupedData;
   };
 
   const handleWebSocketMessage = (data: any) => {
@@ -128,10 +145,19 @@ const OrderBookComponent: React.FC = () => {
     setFeedActive(!feedActive);
   };
 
-  // Group buy and sell orders based on the selected grouping size
   const groupedBuyOrders = groupOrders(orderBook.buy, grouping);
   const groupedSellOrders = groupOrders(orderBook.sell, grouping);
 
+  // max and min price
+  const maxBuyTotal = Math.max(
+    ...groupedBuyOrders.map((order) => order.total),
+    0
+  );
+  const maxSellTotal = Math.max(
+    ...groupedSellOrders.map((order) => order.total),
+    0
+  );
+  // implement the websocket hook
   useWebSocket(
     "wss://www.cryptofacilities.com/ws/v1",
     market,
@@ -141,17 +167,17 @@ const OrderBookComponent: React.FC = () => {
 
   return (
     <div>
-      <div className="p-4 h-[800px] overflow-y-auto">
+      <div className="p-4 overflow-hidden w-full h-[700px]">
         <div className="flex items-center justify-between border-b border-b-white mb-5">
           <h1 className="text-2xl font-bold">Order Book</h1>
           <GroupingSelect grouping={grouping} setGrouping={setGrouping} />
         </div>
         <h2 className="mt-4 text-xl mb-3">Current Market: {market}</h2>
 
-        <div className="flex gap-x-8">
-          <div className="w-1/2 ">
-            <div className="flex justify-between font-bold border-b">
-              <span>Total </span>
+        <div className="flex">
+          <div className="w-1/2 relative">
+            <div className="flex justify-around font-bold mb-3">
+              <span>Total</span>
               <span>Size</span>
               <span>Price</span>
             </div>
@@ -160,22 +186,26 @@ const OrderBookComponent: React.FC = () => {
                 key={level.price}
                 level={level}
                 isBuy={true}
+                maxTotal={maxBuyTotal}
               />
             ))}
           </div>
-          <div className="w-1/2 ">
-            <div className="flex justify-between font-bold border-b">
+          <div className="w-1/2 relative">
+            <div className="flex justify-around font-bold mb-3">
               <span>Price</span>
               <span>Size</span>
               <span>Total</span>
             </div>
-            {groupedSellOrders.map((level) => (
-              <OrderLevelComponent
-                key={level.price}
-                level={level}
-                isBuy={false}
-              />
-            ))}
+            {groupedSellOrders
+              .sort((a: OrderLevel, b: OrderLevel) => b.price - a.price)
+              .map((level) => (
+                <OrderLevelComponent
+                  key={level.price}
+                  level={level}
+                  isBuy={false}
+                  maxTotal={maxSellTotal}
+                />
+              ))}
           </div>
         </div>
       </div>
