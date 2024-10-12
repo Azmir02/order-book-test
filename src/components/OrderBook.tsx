@@ -196,16 +196,14 @@ const OrderBookComponent: React.FC = () => {
               <span>Size</span>
               <span>Total</span>
             </div>
-            {groupedSellOrders
-              .sort((a: OrderLevel, b: OrderLevel) => b.price - a.price)
-              .map((level) => (
-                <OrderLevelComponent
-                  key={level.price}
-                  level={level}
-                  isBuy={false}
-                  maxTotal={maxSellTotal}
-                />
-              ))}
+            {groupedSellOrders.map((level) => (
+              <OrderLevelComponent
+                key={level.price}
+                level={level}
+                isBuy={false}
+                maxTotal={maxSellTotal}
+              />
+            ))}
           </div>
         </div>
       </div>
